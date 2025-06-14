@@ -36,52 +36,52 @@ afterEach(() => {
   document.body.removeChild(container)
 })
 
-function addTask(text: string) {
+async function addTask(text: string) {
   const input = container.querySelector('input') as HTMLInputElement
-  act(() => {
+  await act(async () => {
     input.value = text
     input.dispatchEvent(new Event('input', { bubbles: true }))
   })
   const addButton = getAddButton()
-  act(() => {
+  await act(async () => {
     addButton.dispatchEvent(new MouseEvent('click', { bubbles: true }))
   })
 }
 
 describe('TodoApp', () => {
-  it('adds tasks and stores them in localStorage', () => {
-    addTask('Test task')
+  it('adds tasks and stores them in localStorage', async () => {
+    await addTask('Test task')
     expect(container.textContent).toContain('Test task')
     const stored = JSON.parse(localStorage.getItem('todo-tasks') || '[]')
     expect(stored[0].text).toBe('Test task')
   })
 
-  it('prevents adding duplicate tasks', () => {
-    addTask('task')
-    addTask('task')
+  it('prevents adding duplicate tasks', async () => {
+    await addTask('task')
+    await addTask('task')
     expect(container.textContent?.match(/task/g)?.length).toBe(1)
   })
 
-  it('removes tasks', () => {
-    addTask('delete me')
+  it('removes tasks', async () => {
+    await addTask('delete me')
     const removeButton = Array.from(container.querySelectorAll('button')).find(b => b.querySelector('svg')) as HTMLButtonElement
-    act(() => {
+    await act(async () => {
       removeButton.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     })
     expect(container.textContent).not.toContain('delete me')
   })
 
-  it('toggles completion and filters active tasks', () => {
-    addTask('complete me')
-    const checkbox = container.querySelector('input[type="checkbox"]') as HTMLInputElement
-    act(() => {
-      checkbox.click()
+  it('toggles completion and filters active tasks', async () => {
+    await addTask('complete me')
+    const checkbox = container.querySelector('[role="checkbox"]') as HTMLElement
+    await act(async () => {
+      checkbox.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     })
-    expect(checkbox.checked).toBe(true)
+    expect(checkbox.getAttribute('data-state')).toBe('checked')
 
     const filter = getFilterSelect()
     if (filter) {
-      act(() => {
+      await act(async () => {
         filter.value = 'active'
         filter.dispatchEvent(new Event('change', { bubbles: true }))
       })
@@ -89,18 +89,19 @@ describe('TodoApp', () => {
     }
   })
 
-  it('sorts tasks alphabetically', () => {
-    addTask('b task')
-    addTask('a task')
+  it('sorts tasks alphabetically', async () => {
+    await addTask('b task')
+    await addTask('a task')
     const sort = getSortSelect()
     if (sort) {
-      act(() => {
+      await act(async () => {
         sort.value = 'alphabetical'
         sort.dispatchEvent(new Event('change', { bubbles: true }))
       })
     }
-    const items = Array.from(container.querySelectorAll('p')).map(p => p.textContent)
+    const items = Array.from(container.querySelectorAll('p'))
+      .map(p => p.textContent?.trim())
+      .filter(t => t === 'a task' || t === 'b task')
     expect(items[0]).toBe('a task')
   })
 })
-
