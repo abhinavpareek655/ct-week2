@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'to-do app',
+  title: 'To-Do App',
   description: 'everyday tasks tracker',
   generator: 'Next.js',
 }
