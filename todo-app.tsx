@@ -168,7 +168,7 @@ export default function TodoApp() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="max-w-4xl mx-auto p-0 sm:p-6 space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -191,7 +191,7 @@ export default function TodoApp() {
                 className="flex-1"
               />
               <Select value={priority} onValueChange={(value: "low" | "medium" | "high") => setPriority(value)}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-20 sm:w-32">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -200,10 +200,13 @@ export default function TodoApp() {
                   <SelectItem value="high">High</SelectItem>
                 </SelectContent>
               </Select>
-              <Button onClick={addTask} className="px-6">
-                <Plus className="h-4 w-4 mr-2" />
-                Add
-              </Button>
+                <Button
+                onClick={addTask}
+                className="px-3 py-2 flex items-center sm:px-6 sm:py-2 text-sm sm:text-base"
+                >
+                <Plus className="h-4 w-4 sm:mr-2" />
+                <span className="sr-only sm:not-sr-only sm:inline">Add</span>
+                </Button>
             </div>
 
             {error && (
@@ -226,7 +229,7 @@ export default function TodoApp() {
             <div className="flex gap-2 items-center">
               <span className="text-sm font-medium">Filter:</span>
               <Select value={filter} onValueChange={(value: FilterType) => setFilter(value)}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-24 sm:w-32">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -240,7 +243,7 @@ export default function TodoApp() {
             <div className="flex gap-2 items-center">
               <span className="text-sm font-medium">Sort by:</span>
               <Select value={sort} onValueChange={(value: SortType) => setSort(value)}>
-                <SelectTrigger className="w-36">
+                <SelectTrigger className="w-24 sm:w-32">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -264,10 +267,14 @@ export default function TodoApp() {
             {filteredAndSortedTasks.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 {tasks.length === 0 ? (
-                  <div className="space-y-2">
-                    <Circle className="h-12 w-12 mx-auto opacity-50" />
+                    <div className="space-y-2 flex flex-col items-center">
+                    <img
+                      src="https://media.giphy.com/media/26ufnwz3wDUli7GU0/giphy.gif"
+                      alt="Aesthetic pixel art animation"
+                      className="h-20 w-20 mx-auto rounded shadow opacity-80"
+                    />
                     <p>No tasks yet. Add one above!</p>
-                  </div>
+                    </div>
                 ) : (
                   <p>No tasks match the current filter.</p>
                 )}
