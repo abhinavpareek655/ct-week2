@@ -62,8 +62,8 @@ export default function TodoApp() {
     if (text.trim().length < 3) {
       return "Task must be at least 3 characters long"
     }
-    if (text.trim().length > 256) {
-      return "Task cannot exceed 256 characters"
+    if (text.trim().length > 512) {
+      return "Task cannot exceed 512 characters"
     }
     if (tasks.some((task) => task.text.toLowerCase() === text.trim().toLowerCase())) {
       return "Task already exists"
