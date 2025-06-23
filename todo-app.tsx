@@ -4,7 +4,14 @@ import React, { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectSeparator,
+} from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Trash2, Plus, Calendar, CheckCircle, Circle, AlertCircle } from "lucide-react"
@@ -31,7 +38,6 @@ export default function TodoApp() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [groups, setGroups] = useState<Group[]>([])
   const [selectedGroup, setSelectedGroup] = useState("")
-  const [newGroup, setNewGroup] = useState("")
   const [newTask, setNewTask] = useState("")
   const [filter, setFilter] = useState<FilterType>("all")
   const [sort, setSort] = useState<SortType>("date")
@@ -111,14 +117,13 @@ export default function TodoApp() {
     return ""
   }
 
-  const addGroup = () => {
-    const name = newGroup.trim()
-    if (!name) return
-    if (groups.some((g) => g.name.toLowerCase() === name.toLowerCase())) return
+  const addGroup = (name: string) => {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    if (groups.some((g) => g.name.toLowerCase() === trimmed.toLowerCase())) return
 
-    const group = { id: Date.now().toString(), name }
+    const group = { id: Date.now().toString(), name: trimmed }
     setGroups((prev) => [...prev, group])
-    setNewGroup("")
     setSelectedGroup(group.id)
   }
 
@@ -219,11 +224,21 @@ export default function TodoApp() {
     }
   }
 
-  const handleGroupKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      addGroup()
+  const handleGroupChange = (value: string) => {
+    if (value === "__add") {
+      const name = window.prompt("New group name?")
+      if (name) {
+        addGroup(name)
+      }
+      return
     }
+    if (value === "__delete") {
+      removeGroup(selectedGroup)
+      return
+    }
+    setSelectedGroup(value)
   }
+
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -252,7 +267,7 @@ export default function TodoApp() {
           <div className="space-y-2">
             <div className="flex gap-2 items-center">
               <span className="text-sm font-medium">Group:</span>
-              <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+              <Select value={selectedGroup} onValueChange={handleGroupChange}>
                 <SelectTrigger className="w-24 sm:w-32">
                   <SelectValue />
                 </SelectTrigger>
@@ -262,34 +277,13 @@ export default function TodoApp() {
                       {group.name}
                     </SelectItem>
                   ))}
+                  <SelectSeparator />
+                  <SelectItem value="__add">Add Group</SelectItem>
+                  {groups.length > 1 && (
+                    <SelectItem value="__delete">Delete Group</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="flex gap-2">
-              <Input
-                placeholder="New group..."
-                value={newGroup}
-                onChange={(e) => setNewGroup(e.target.value)}
-                onKeyPress={handleGroupKeyPress}
-                className="flex-1"
-              />
-              <Button
-                onClick={addGroup}
-                className="px-3 py-2 flex items-center sm:px-6 sm:py-2 text-sm sm:text-base"
-              >
-                <Plus className="h-4 w-4 sm:mr-2" />
-                <span className="sr-only sm:not-sr-only sm:inline">Add Group</span>
-              </Button>
-              {groups.length > 1 && (
-                <Button
-                  variant="outline"
-                  onClick={() => removeGroup(selectedGroup)}
-                  className="px-3 py-2 flex items-center text-sm sm:text-base text-destructive border-destructive"
-                >
-                  <Trash2 className="h-4 w-4 sm:mr-2" />
-                  <span className="sr-only sm:not-sr-only sm:inline">Delete Group</span>
-                </Button>
-              )}
             </div>
           </div>
 
