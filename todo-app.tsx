@@ -190,7 +190,7 @@ export default function TodoApp() {
           return b.createdAt.getTime() - a.createdAt.getTime()
       }
     })
-  }, [tasks, filter, sort])
+  }, [tasks, filter, sort, selectedGroup])
 
   // Statistics
   const stats = useMemo(() => {
