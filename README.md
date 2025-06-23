@@ -42,4 +42,4 @@ The `TodoApp` component relies on interactive UI features that are difficult to 
 pnpm dev
 ```
 
-Open `http://localhost:3000` in a browser and verify adding, removing, filtering and sorting tasks works as expected.
+Open `http://localhost:3000` in a browser and verify adding, removing, filtering and sorting tasks works as expected. You can now create multiple groups and assign tasks to those groups.

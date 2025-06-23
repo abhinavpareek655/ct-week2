@@ -16,6 +16,12 @@ interface Task {
   completed: boolean
   createdAt: Date
   priority: "low" | "medium" | "high"
+  groupId: string
+}
+
+interface Group {
+  id: string
+  name: string
 }
 
 type FilterType = "all" | "active" | "completed"
@@ -23,6 +29,9 @@ type SortType = "date" | "alphabetical" | "priority" | "completion"
 
 export default function TodoApp() {
   const [tasks, setTasks] = useState<Task[]>([])
+  const [groups, setGroups] = useState<Group[]>([])
+  const [selectedGroup, setSelectedGroup] = useState("")
+  const [newGroup, setNewGroup] = useState("")
   const [newTask, setNewTask] = useState("")
   const [filter, setFilter] = useState<FilterType>("all")
   const [sort, setSort] = useState<SortType>("date")
@@ -30,20 +39,38 @@ export default function TodoApp() {
   const [error, setError] = useState("")
   const [isLoaded, setIsLoaded] = useState(false)
 
-  // Load tasks from localStorage on component mount
+  // Load groups and tasks from localStorage on component mount
   useEffect(() => {
+    const savedGroups = localStorage.getItem("todo-groups")
+    let loadedGroups: Group[] = []
+    if (savedGroups) {
+      try {
+        loadedGroups = JSON.parse(savedGroups)
+      } catch (error) {
+        console.error("Error loading groups from localStorage:", error)
+      }
+    }
+
+    if (loadedGroups.length === 0) {
+      loadedGroups = [{ id: "default", name: "Default" }]
+    }
+    setGroups(loadedGroups)
+    setSelectedGroup(loadedGroups[0].id)
+
     const savedTasks = localStorage.getItem("todo-tasks")
     if (savedTasks) {
       try {
         const parsedTasks = JSON.parse(savedTasks).map((task: any) => ({
           ...task,
           createdAt: new Date(task.createdAt),
+          groupId: task.groupId || loadedGroups[0].id,
         }))
         setTasks(parsedTasks)
       } catch (error) {
         console.error("Error loading tasks from localStorage:", error)
       }
     }
+
     setIsLoaded(true)
   }, [])
 
@@ -53,6 +80,13 @@ export default function TodoApp() {
       localStorage.setItem("todo-tasks", JSON.stringify(tasks))
     }
   }, [tasks, isLoaded])
+
+  // Save groups whenever they change
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("todo-groups", JSON.stringify(groups))
+    }
+  }, [groups, isLoaded])
 
   // Input validation
   const validateTask = (text: string): string => {
@@ -65,10 +99,27 @@ export default function TodoApp() {
     if (text.trim().length > 512) {
       return "Task cannot exceed 512 characters"
     }
-    if (tasks.some((task) => task.text.toLowerCase() === text.trim().toLowerCase())) {
+    if (
+      tasks.some(
+        (task) =>
+          task.groupId === selectedGroup &&
+          task.text.toLowerCase() === text.trim().toLowerCase()
+      )
+    ) {
       return "Task already exists"
     }
     return ""
+  }
+
+  const addGroup = () => {
+    const name = newGroup.trim()
+    if (!name) return
+    if (groups.some((g) => g.name.toLowerCase() === name.toLowerCase())) return
+
+    const group = { id: Date.now().toString(), name }
+    setGroups((prev) => [...prev, group])
+    setNewGroup("")
+    setSelectedGroup(group.id)
   }
 
   // Add new task
@@ -85,6 +136,7 @@ export default function TodoApp() {
       completed: false,
       createdAt: new Date(),
       priority,
+      groupId: selectedGroup,
     }
 
     setTasks((prev) => [...prev, task])
@@ -104,23 +156,23 @@ export default function TodoApp() {
 
   // Clear all completed tasks
   const clearCompleted = () => {
-    setTasks((prev) => prev.filter((task) => !task.completed))
+    setTasks((prev) => prev.filter((task) => !(task.groupId === selectedGroup && task.completed)))
   }
 
   // Filter and sort tasks
   const filteredAndSortedTasks = useMemo(() => {
-    let filtered = tasks
+    let filtered = tasks.filter((task) => task.groupId === selectedGroup)
 
     // Apply filter
     switch (filter) {
       case "active":
-        filtered = tasks.filter((task) => !task.completed)
+        filtered = filtered.filter((task) => !task.completed)
         break
       case "completed":
-        filtered = tasks.filter((task) => task.completed)
+        filtered = filtered.filter((task) => task.completed)
         break
       default:
-        filtered = tasks
+        filtered = filtered
     }
 
     // Apply sort
@@ -142,15 +194,22 @@ export default function TodoApp() {
 
   // Statistics
   const stats = useMemo(() => {
-    const total = tasks.length
-    const completed = tasks.filter((task) => task.completed).length
+    const groupTasks = tasks.filter((t) => t.groupId === selectedGroup)
+    const total = groupTasks.length
+    const completed = groupTasks.filter((task) => task.completed).length
     const active = total - completed
     return { total, completed, active }
-  }, [tasks])
+  }, [tasks, selectedGroup])
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       addTask()
+    }
+  }
+
+  const handleGroupKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      addGroup()
     }
   }
 
@@ -177,6 +236,41 @@ export default function TodoApp() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Group Section */}
+          <div className="space-y-2">
+            <div className="flex gap-2 items-center">
+              <span className="text-sm font-medium">Group:</span>
+              <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+                <SelectTrigger className="w-24 sm:w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {groups.map((group) => (
+                    <SelectItem key={group.id} value={group.id}>
+                      {group.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="New group..."
+                value={newGroup}
+                onChange={(e) => setNewGroup(e.target.value)}
+                onKeyPress={handleGroupKeyPress}
+                className="flex-1"
+              />
+              <Button
+                onClick={addGroup}
+                className="px-3 py-2 flex items-center sm:px-6 sm:py-2 text-sm sm:text-base"
+              >
+                <Plus className="h-4 w-4 sm:mr-2" />
+                <span className="sr-only sm:not-sr-only sm:inline">Add Group</span>
+              </Button>
+            </div>
+          </div>
+
           {/* Add Task Section */}
           <div className="space-y-4">
             <div className="flex gap-2">
@@ -266,7 +360,7 @@ export default function TodoApp() {
           <div className="space-y-2">
             {filteredAndSortedTasks.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                {tasks.length === 0 ? (
+                {tasks.filter((t) => t.groupId === selectedGroup).length === 0 ? (
                     <div className="space-y-2 flex flex-col items-center">
                     <img
                       src="https://media.giphy.com/media/26ufnwz3wDUli7GU0/giphy.gif"
