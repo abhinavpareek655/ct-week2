@@ -122,6 +122,18 @@ export default function TodoApp() {
     setSelectedGroup(group.id)
   }
 
+  const removeGroup = (id: string) => {
+    if (groups.length === 1) return
+    setGroups((prev) => {
+      const updated = prev.filter((g) => g.id !== id)
+      if (id === selectedGroup) {
+        setSelectedGroup(updated[0].id)
+      }
+      return updated
+    })
+    setTasks((prev) => prev.filter((t) => t.groupId !== id))
+  }
+
   // Add new task
   const addTask = () => {
     const validationError = validateTask(newTask)
@@ -268,6 +280,16 @@ export default function TodoApp() {
                 <Plus className="h-4 w-4 sm:mr-2" />
                 <span className="sr-only sm:not-sr-only sm:inline">Add Group</span>
               </Button>
+              {groups.length > 1 && (
+                <Button
+                  variant="outline"
+                  onClick={() => removeGroup(selectedGroup)}
+                  className="px-3 py-2 flex items-center text-sm sm:text-base text-destructive border-destructive"
+                >
+                  <Trash2 className="h-4 w-4 sm:mr-2" />
+                  <span className="sr-only sm:not-sr-only sm:inline">Delete Group</span>
+                </Button>
+              )}
             </div>
           </div>
 
